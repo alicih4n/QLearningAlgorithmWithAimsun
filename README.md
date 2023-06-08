@@ -3,4 +3,6 @@ This is a AI based traffic control project. The aim of this project is to contro
 
 
 
-Ultimately, This project is my both thesis project and TUBITAK supported project (2209-A). Make fun with power of AI in traffic :)
+Ultimately, This project is my both thesis project and TUBITAK supported project (2209-A).
+
+Make fun with power of AI in traffic :)
