@@ -1,0 +1,5 @@
+logging:
+  log_dir: "logs/"
+  tensorboard: true
+  save_freq: 50          # Save model every N episodes
+  log_level: "INFO"

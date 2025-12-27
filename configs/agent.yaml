@@ -1,0 +1,15 @@
+agent:
+  type: "DQN"
+  gamma: 0.99            # Discount factor
+  epsilon_start: 1.0     # Initial exploration rate
+  epsilon_end: 0.01      # Final exploration rate
+  epsilon_decay: 0.995   # Decay rate per episode
+  learning_rate: 0.001
+  batch_size: 64
+  memory_size: 100000    # Replay buffer size
+  target_update_input: 1000 # Steps between target network updates
+  hidden_layers: [128, 128]
+
+training:
+  episodes: 500
+  max_steps_per_episode: 1000

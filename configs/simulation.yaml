@@ -1,0 +1,46 @@
+simulation:
+  network_path: "C:/Users/oalic/Documents/Aimsun/Projects/MyNetwork.ang"
+  duration: 3600
+  step_size: 0.5
+  random_seed: 42
+  
+  scenarios:
+    morning_rush:
+      traffic_demand: "C:/Users/oalic/Documents/Aimsun/Projects/Demand_Morning.od"
+      control_plan: "C:/Users/oalic/Documents/Aimsun/Projects/Control_Morning.cntl"
+    off_peak:
+      traffic_demand: "C:/Users/oalic/Documents/Aimsun/Projects/Demand_OffPeak.od"
+      control_plan: "C:/Users/oalic/Documents/Aimsun/Projects/Control.cntl"
+    weekend:
+      traffic_demand: "C:/Users/oalic/Documents/Aimsun/Projects/Demand_Weekend.od"
+      control_plan: "C:/Users/oalic/Documents/Aimsun/Projects/Control.cntl"
+
+  stochastic_events:
+    enabled: true
+    accident_probability: 0.05 # Probability per episode
+    accident_duration_range: [300, 600] # Seconds
+
+  
+env:
+  num_intersections: 4 # Let's control a grid of 4 junctions!
+  intersections:
+    - id: 135
+      phases: 4
+      detectors: [101, 102, 103, 104]
+    - id: 136
+      phases: 4
+      detectors: [201, 202, 203, 204]
+    - id: 137
+      phases: 2 # Simple intersection
+      detectors: [301, 302]
+    - id: 138
+      phases: 4
+      detectors: [401, 402, 403, 404]
+
+  state_dim: 20 # Expanded state vector (queue, speed, occupancy per arm + global info)
+  action_dim: 4 # Max phases
+  reward_weights:
+    throughput: 2.0
+    wait_time: -1.0 # Penalize waiting hard
+    queue_length: -0.8
+    stops: -0.5 # New metric: penalize stop-and-go traffic

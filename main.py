@@ -1,77 +1,86 @@
-import aimsun_api
+import yaml
+import os
+import numpy as np
+import time
+from collections import deque
+from src.core.aimsun_env import AimsunEnv
+from src.agents.dqn_agent import DQNAgent
+from src.analysis.logger import setup_logging, MetricTracker
 
-from car import Car
-from route import select_route
-from data_processing import process_data
-from traffic_lights import TrafficLights
-from q_learning import QLearning
+def load_config(path):
+    with open(path, 'r') as f:
+        return yaml.safe_load(f)
 
+def run():
+    # Load Configurations
+    sim_config = load_config("configs/simulation.yaml")
+    agent_config = load_config("configs/agent.yaml")
+    
+    # Setup Logging
+    log_dir = "logs" # simplistic, better from config
+    logger, writer = setup_logging("configs/logging.yaml", run_name=f"run_{int(time.time())}")
+    # We need to extract the actual log path constructed in setup_logging to be consistent, but let's just pass the root for now or fix logging.
+    # Actually setup_logging returns the logger but not the specific dir. 
+    # Let's simple hardcode a path that both agree on or re-parse. 
+    # For now, let's just assume logs/latest for the dashboard.
+    
+    tracker = MetricTracker(writer, log_dir="logs/") # Just dumping in root logs/ for simplicity of the dashboard finding it.
+    
+    logger.info("Initializing Aimsun Environment...")
+    env = AimsunEnv(sim_config)
+    
+    # Get State and Action sizes
+    state_size = env.observation_space.shape[0]
+    action_size = env.action_space.n
+    
+    logger.info(f"State Size: {state_size}, Action Size: {action_size}")
+    
+    # Initialize Agent
+    agent = DQNAgent(state_size=state_size, action_size=action_size, seed=sim_config['simulation']['random_seed'], config=agent_config['agent'])
+    
+    # Training Loop
+    n_episodes = agent_config['training']['episodes']
+    max_t = agent_config['training']['max_steps_per_episode']
+    eps_start = agent_config['agent']['epsilon_start']
+    eps_end = agent_config['agent']['epsilon_end']
+    eps_decay = agent_config['agent']['epsilon_decay']
+    
+    scores = []                        # list containing scores from each episode
+    scores_window = deque(maxlen=100)  # last 100 scores
+    eps = eps_start                    # initialize epsilon
+    
+    for i_episode in range(1, n_episodes + 1):
+        state, _ = env.reset()
+        score = 0
+        for t in range(max_t):
+            action = agent.act(state, eps)
+            next_state, reward, done, truncated, _ = env.step(action)
+            
+            agent.step(state, action, reward, next_state, done)
+            state = next_state
+            score += reward
+            
+            if done or truncated:
+                break 
+                
+        scores_window.append(score)       # save most recent score
+        scores.append(score)              # save most recent score
+        
+        eps = max(eps_end, eps_decay * eps) # decrease epsilon
+        
+        tracker.log_episode(i_episode, score, eps)
+        
+        print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)), end="")
+        if i_episode % 100 == 0:
+            print('\rEpisode {}\tAverage Score: {:.2f}'.format(i_episode, np.mean(scores_window)))
+            
+        if i_episode % agent_config['logging']['save_freq'] == 0:
+             # Save model
+             # agent.save("checkpoint.pth")
+             pass
 
-def configure_simulation():
-    aimsun_api.connect()  
-
-    simulation_config = SimulationConfig()
-    simulation_config.set_simulation_duration(7200)  
-
-    network_file = "path/to/network_file.xml"  
-    aimsun_api.load_network(network_file)
-
-    control_file = "path/to/control_file.cntl"  
-    aimsun_api.load_control_file(control_file)
-
-    aimsun_api.start()
-
-
-def start_simulation():
-    aimsun_api.start_simulation()
-
-
-def create_vehicle():
-    vehicle_id = 1  
-    initial_position = (0, 0)  
-    initial_speed = 20  
-    destination = (100, 100)  
-
-    car = Car(vehicle_id)
-    car.set_position(initial_position)
-    car.set_speed(initial_speed)
-    car.set_destination(destination)
-
-    aimsun_api.add_vehicle(car)
-
-
-def add_vehicles_to_simulation(vehicles):
-    pass
-
-def create_traffic_lights():
-    pass
-
-def connect_traffic_lights_to_control_file(traffic_lights):
-    for traffic_light in traffic_lights:
-        aimsun_api.connect_traffic_light_to_control_file(traffic_light)
-
-def configure_q_learning():
-    q_learning = QLearning()
-    q_learning.configure_parameters()
-
-
-def start_q_learning():
-    q_learning = QLearning()
-    q_learning.start_learning()
+    tracker.close()
+    logger.info("Training finished.")
 
 if __name__ == "__main__":
-    aimsun_api.connect()
-
-    configure_simulation()
-    start_simulation()
-
-    vehicles = create_vehicles()
-    add_vehicles_to_simulation(vehicles)
-
-    traffic_lights = create_traffic_lights()
-    connect_traffic_lights_to_control_file(traffic_lights)
-
-    configure_q_learning()
-    start_q_learning()
-
-    aimsun_api.start()
+    run()
