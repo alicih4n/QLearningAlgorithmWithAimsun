@@ -1,5 +1,9 @@
 # Aimsun Deep Reinforcement Learning Platform
 
+## 🏅 TUBITAK Supported Project
+> **This project is officially supported by TUBITAK (The Scientific and Technological Research Council of Turkey) under the 2209-A Research Project Support Programme.**
+> It serves as a graduation thesis dedicated to advancing Intelligent Transportation Systems through state-of-the-art Deep Reinforcement Learning.
+
 This project implements a Deep Reinforcement Learning (DQN) agent to control traffic lights using the Aimsun traffic simulator. It represents a significant upgrade from generic Q-Learning to a modular, research-grade deep learning architecture.
 
 ## 🚀 Key Features
